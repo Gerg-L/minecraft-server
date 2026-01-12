@@ -8,6 +8,8 @@
     nixosConfigurations.bitch-pooter = inputs.nixpkgs.lib.nixosSystem {
       specialArgs = { inherit inputs; };
       modules = [
+        ./minecraft.nix
+        ./minecraftModule.nix
         ./configuration.nix
         ./disko.nix
         ./nix.nix

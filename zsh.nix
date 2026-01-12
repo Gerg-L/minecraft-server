@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs, ... }:
 {
   users.defaultUserShell = pkgs.zsh;
   programs = {

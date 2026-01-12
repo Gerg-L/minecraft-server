@@ -2,8 +2,7 @@
   disko.devices = {
     disk = {
       main = {
-        #TODO disk label
-        device = "/dev/disk/by-id";
+        device = "/dev/disk/by-id/nvme-SAMSUNG_MZVLB256HBHQ-000L7_S4ELNX3N781459";
         type = "disk";
         content = {
           type = "gpt";
@@ -18,21 +17,20 @@
                 mountOptions = [ "umask=0077" ];
               };
             };
-            root = {
-              # TODO swap size
-              end = "-1G";
-              content = {
-                type = "filesystem";
-                format = "xfs";
-                mountpoint = "/";
-              };
-            };
             swap = {
-              size = "100%";
+              size = "16G";
               content = {
                 type = "swap";
                 discardPolicy = "both";
                 resumeDevice = true;
+              };
+            };
+            root = {
+              size = "100%";
+              content = {
+                type = "filesystem";
+                format = "xfs";
+                mountpoint = "/";
               };
             };
           };

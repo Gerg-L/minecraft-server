@@ -4,7 +4,6 @@
   pkgs,
   ...
 }:
-
 {
   boot = {
     loader = {
@@ -20,23 +19,39 @@
       };
     };
     kernelPackages = pkgs.linuxPackages_latest;
-    initrd.systemd.enable = true;
+    initrd = {
+      systemd.enable = true;
+      availableKernelModules = [
+        "xhci_pci"
+        "ahci"
+        "nvme"
+        "usbhid"
+        "usb_storage"
+        "sd_mod"
+        "sr_mod"
+      ];
+    };
     enableContainers = false;
   };
 
   networking = {
-    usePredictableInterfaceNames = false;
-    hostName = "bitch";
+    hostName = "bitch-pooter";
     useNetworkd = false;
     useDHCP = false;
     firewall.enable = true;
   };
 
-  systemd.network.networks.default = {
-    name = "en*";
-    DHCP = "yes";
-    networkConfig.IPv6AcceptRA = true;
-    linkConfig.RequiredForOnline = "routable";
+  systemd.network = {
+    enable = true;
+    networks.default = {
+      matchConfig.Name = "enp2s0";
+      DHCP = "no";
+      address = [ "192.168.1.249/24" ];
+      gateway = [ "192.168.1.1" ];
+      dns = [ "192.168.1.1" ];
+      networkConfig.IPv6AcceptRA = true;
+      linkConfig.RequiredForOnline = "routable";
+    };
   };
 
   time.timeZone = "America/New_York";
@@ -44,7 +59,6 @@
   i18n.defaultLocale = "en_US.UTF-8";
   console = {
     font = "Lat2-Terminus16";
-    keyMap = "us";
     useXkbConfig = true;
   };
 
@@ -85,7 +99,11 @@
           type = "ed25519";
         }
       ];
-      settings.PermitRootLogin = "no";
+      settings = {
+        PermitRootLogin = "no";
+        PasswordAuthentication = false;
+        KbdInteractiveAuthentication = false;
+      };
     };
     userborn.enable = true;
   };
@@ -95,12 +113,13 @@
   users.users = {
     root.hashedPassword = "!";
     sacc = {
-      initialHashsedPassword = "";
+      initialHashedPassword = "";
       uid = 1000;
       isNormalUser = true;
       extraGroups = [ "wheel" ];
       openssh.authorizedKeys.keys = [
-        #TODO: add isacc key
+        #isaac windows
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK13mhFwVohh8CGMMmwWYUc8PHoryxPJNbiLEuxo5x5L"
         #gerg-phone
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILZKIp3iObuxEUPx1dsMiN3vyMaMQb0N1gKJY78TtRxd"
         #gerg-windows
@@ -114,6 +133,7 @@
   programs = {
     mtr.enable = true;
     command-not-found.enable = false;
+    git.enable = true;
   };
 
   documentation = {
@@ -127,6 +147,8 @@
       pkgs.efibootmgr
       pkgs.pciutils
       pkgs.nix-janitor
+      pkgs.fzf
+      pkgs.ripgrep
       inputs.nvim-flake.packages.${pkgs.stdenv.system}.default
     ];
     defaultPackages = lib.mkForce [ ];
@@ -148,6 +170,4 @@
     cpu.intel.updateMicrocode = true;
     enableRedistributableFirmware = true;
   };
-  #TODO: gen kernelModules from nixos-generate-config
-
 }

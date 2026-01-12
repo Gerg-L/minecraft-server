@@ -10,7 +10,6 @@
     registry = lib.pipe inputs [
       (lib.filterAttrs (_: lib.isType "flake"))
       (lib.mapAttrs (_: flake: { inherit flake; }))
-      (x: x // { nixpkgs.flake = inputs.unstable; })
     ];
     nixPath = [ "/etc/nix/path" ];
     settings = {
