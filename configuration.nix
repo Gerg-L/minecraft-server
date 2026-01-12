@@ -26,7 +26,7 @@
 
   networking = {
     usePredictableInterfaceNames = false;
-    hostName = "bitch";
+    hostName = "bitch-pooter";
     useNetworkd = false;
     useDHCP = false;
     firewall.enable = true;
