@@ -46,9 +46,9 @@
     networks.default = {
       matchConfig.Name = "enp2s0";
       DHCP = "no";
-      address = [ "192.168.1.249/24" ];
-      gateway = [ "192.168.1.1" ];
-      dns = [ "192.168.1.1" ];
+      address = [ "192.168.0.50/24" ];
+      gateway = [ "192.168.0.1" ];
+      dns = [ "192.168.0.1" ];
       networkConfig.IPv6AcceptRA = true;
       linkConfig.RequiredForOnline = "routable";
     };
@@ -99,6 +99,8 @@
           type = "ed25519";
         }
       ];
+      openFirewall = true;
+      ports = [22 1007];
       settings = {
         PermitRootLogin = "no";
         PasswordAuthentication = false;
@@ -126,6 +128,8 @@
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILpYY2uw0OH1Re+3BkYFlxn0O/D8ryqByJB/ljefooNc"
         #gerg-desktop
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJWbwkFJmRBgyWyWU+w3ksZ+KuFw9uXJN3PwqqE7Z/i8"
+        #media-laptop
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIECXkK6pIIUFRY2igF1NyuVBVy4/2Izoy9eWhVih8O/8"
       ];
     };
   };
