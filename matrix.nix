@@ -8,24 +8,29 @@ in
       80 # http
       443 # https
       8448 # matrix
-      5349 # coturn
-      7881 # livekit
-      3478 # coturn
+
+      config.services.coturn.listening-port
+      config.services.coturn.tls-listening-port
+      config.services.coturn.alt-listening-port
+      config.services.coturn.alt-tls-listening-port
+    ];
+
+    allowedUDPPorts = [
+      config.services.coturn.listening-port
+      config.services.coturn.tls-listening-port
+      config.services.coturn.alt-listening-port
+      config.services.coturn.alt-tls-listening-port
     ];
     allowedTCPPortRanges = [
       {
-        from = 50200;
-        to = 50399;
+        from = config.services.coturn.min-port;
+        to = config.services.coturn.max-port;
       }
-    ];
-    allowedUDPPorts = [
-      5349
-      3478
     ];
     allowedUDPPortRanges = [
       {
-        from = 50200;
-        to = 50399;
+        from = config.services.coturn.min-port;
+        to = config.services.coturn.max-port;
       }
     ];
   };
@@ -73,7 +78,7 @@ in
         turn_secret_file = config.sops.secrets.tuwunel.path;
         well_known = {
           client = "https://oursa.cc";
-          server = "oursa.cc:443";
+          server = "oursa.cc";
           rtc_transports = [
             {
               type = "livekit";
@@ -89,6 +94,7 @@ in
     keyFile = config.sops.secrets.livekit.path;
     openFirewall = true;
     settings = {
+      room.auto_create = false;
       port = 7880;
       rtc = {
         tcp_port = 7881;
@@ -105,13 +111,7 @@ in
           }
         ];
       };
-      turn = {
-        enabled = false;
-        #udp_port = 5349;
-        #domain = "coturn.oursa.cc";
-        #relay_range_start = 50200;
-        #relay_range_end = 50399;
-      };
+      turn.enabled = false;
     };
   };
   services.lk-jwt-service = {
@@ -122,13 +122,27 @@ in
   };
   services.coturn = {
     enable = true;
-    tls-listening-port = 5349;
+    no-cli = true;
     use-auth-secret = true;
     static-auth-secret-file = config.sops.secrets.coturn.path;
+    #these are the same
+    listening-port = 3478;
+    alt-listening-port = 3479;
+    tls-listening-port = 5349;
+    alt-tls-listening-port = 5350;
+    pkey = "${config.security.acme.certs."oursa.cc".directory}/key.pem";
+    cert = "${config.security.acme.certs."oursa.cc".directory}/fullchain.pem";
     realm = "coturn.oursa.cc";
     min-port = 50200;
     max-port = 50399;
+
+    no-tcp-relay = true;
+    secure-stun = true;
   };
+
+  systemd.services.coturn.serviceConfig.SupplementaryGroups = [
+    config.security.acme.certs."oursa.cc".group
+  ];
 
   services.nginx = {
     enable = true;
@@ -136,6 +150,7 @@ in
     recommendedOptimisation = true;
     recommendedProxySettings = true;
     recommendedTlsSettings = true;
+    recommendedGzipSettings = true;
     clientMaxBodySize = "1G";
     proxyTimeout = "600s";
     virtualHosts = {
@@ -180,11 +195,8 @@ in
         locations = {
           "/_matrix" = {
             proxyPass = "http://127.0.0.1:${toString (lib.head cfg.settings.global.port)}";
-            proxyWebsockets = true;
             extraConfig = ''
-              proxy_set_header Host $host;
               proxy_buffering off;
-              proxy_read_timeout 5m;
             '';
           };
           "/.well-known/matrix" = {
@@ -198,33 +210,23 @@ in
         forceSSL = true;
         locations = {
           "~ ^/(sfu/get|healthz|get_token)" = {
-
             proxyPass = "http://127.0.0.1:${toString config.services.lk-jwt-service.port}";
-            priority = 400;
             extraConfig = ''
-              proxy_set_header X-Forwarded-For $remote_addr;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header $host $http_host;
               proxy_buffering off;            
             '';
           };
           "/" = {
             proxyPass = "http://127.0.0.1:${toString config.services.livekit.settings.port}";
+            proxyWebsockets = true;
             extraConfig = ''
               proxy_send_timeout 120;
               proxy_read_timeout 120;
               proxy_buffering off;
 
-              proxy_set_header X-Forwarded-For $remote_addr;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header $host $http_host;
-
               proxy_set_header Accept-Encoding gzip;
               proxy_set_header Upgrade $http_upgrade;
               proxy_set_header Connection "upgrade";
             '';
-            priority = 400;
-            proxyWebsockets = true;
           };
         };
       };
@@ -238,8 +240,7 @@ in
 
   sops.secrets = {
     livekit = { };
-    livekitEnv = { };
-    tuwunel.owner = "tuwunel";
+    tuwunel.owner = config.services.matrix-tuwunel.user;
     coturn.owner = "turnserver";
     matrix_reg.owner = config.services.matrix-tuwunel.user;
   };
