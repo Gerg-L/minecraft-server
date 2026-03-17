@@ -135,9 +135,6 @@ in
     realm = "coturn.oursa.cc";
     min-port = 50200;
     max-port = 50399;
-
-    no-tcp-relay = true;
-    secure-stun = true;
   };
 
   systemd.services.coturn.serviceConfig.SupplementaryGroups = [
